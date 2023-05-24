@@ -1,4 +1,4 @@
-![alt text](https://raw.githubusercontent.com/huntersofbook/i18n/blob/main/.github/assets/i18n.png?raw=true)
+![alt text](https://github.com/huntersofbook/i18n/blob/main/.github/assets/i18n.png?raw=true)
 
 # i18n
 
@@ -24,7 +24,7 @@ It will be the `.i18n` folder. Save there by adding `en.json`, `tr.json`. It wil
 
 ## Youtube Setup Video
 
-[![Youtube](https://raw.githubusercontent.com/huntersofbook/i18n/blob/main/.github/assets/youtube/i18n.png?raw=true)](https://www.youtube.com/watch?v=b33Zk0LfKkM)
+[![Youtube](https://github.com/huntersofbook/i18n/blob/main/.github/assets/youtube_cover.png?raw=true)](https://www.youtube.com/watch?v=b33Zk0LfKkM)
 
 
 ## Usage
@@ -59,7 +59,7 @@ export default defineNuxtConfig({
 # [Documentation](https://opensource.huntersofbook.com/global/i18n)
 Documentation of the project is available at [https://opensource.huntersofbook.com/global/i18n](https://opensource.huntersofbook.com/global/i18n).
 
-![alt text](https://raw.githubusercontent.com/huntersofbook/i18n/blob/main/.github/assets/i18n/i18n_works.png?raw=true)
+![alt text](https://github.com/huntersofbook/i18n/blob/main/.github/assets/i18n/i18n_works.png?raw=true)
 
 ## Support
 
