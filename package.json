@@ -1,6 +1,6 @@
 {
   "name": "@huntersofbook/i18n",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "packageManager": "pnpm@8.0.0",
   "description": "It's basically a tool that takes a template with translation keys and syncs them to the given language. You can directly connect the outputs to the i18n libraries you use.",
   "author": "Mehmet - productdevbook <hi@productdevbook.com>",
