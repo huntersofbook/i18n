@@ -33,6 +33,22 @@
       "addLabels": [
         "dependencies"
       ]
+    },
+    {
+      "matchFiles": ["playground/nuxt/package.json", "playground/vue/package.json"],
+      "matchUpdateTypes": [
+        "patch",
+        "minor",
+        "major"
+      ],
+      "groupName": "playground",
+      "groupSlug": "playground",
+      "labels": [
+        "dependencies"
+      ],
+      "addLabels": [
+        "dependencies"
+      ]
     }
   ]
 }

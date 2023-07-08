@@ -136,7 +136,7 @@ async function objectUpdate(exportFile: any, templateFile?: string | undefined, 
   }
 }
 
-function autoClean(ctx: Context, existDirectory: Boolean) {
+function autoClean(ctx: Context, existDirectory: boolean) {
   if (existDirectory) {
     const templateFiles = globbySync(`${ctx.options.templateDir}/**/*`, { cwd: ctx.root }).map((file) => {
       return resolve(ctx.root, file).split(ctx.options.templateDir)[1]
