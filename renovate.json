@@ -35,30 +35,14 @@
       ]
     },
     {
-      "matchFiles": ["playground/vue/package.json"],
+      "matchFiles": ["playground/nuxt/package.json", "playground/vue/package.json"],
       "matchUpdateTypes": [
         "patch",
         "minor",
         "major"
       ],
-      "groupName": "playground_vue",
-      "groupSlug": "playground_vue",
-      "labels": [
-        "dependencies"
-      ],
-      "addLabels": [
-        "dependencies"
-      ]
-    },
-    {
-      "matchFiles": ["playground/nuxt/package.json"],
-      "matchUpdateTypes": [
-        "patch",
-        "minor",
-        "major"
-      ],
-      "groupName": "playground_nuxt",
-      "groupSlug": "playground_nuxt",
+      "groupName": "playground",
+      "groupSlug": "playground",
       "labels": [
         "dependencies"
       ],
