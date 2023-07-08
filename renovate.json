@@ -35,9 +35,7 @@
       ]
     },
     {
-      "matchFiles": [
-        "playground/**"
-      ],
+      "matchFiles": ["playground/vue/package.json", "playground/nuxt/package.json"],
       "matchUpdateTypes": [
         "patch",
         "minor",
