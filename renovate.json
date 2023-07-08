@@ -33,6 +33,24 @@
       "addLabels": [
         "dependencies"
       ]
+    },
+    {
+      "matchFiles": [
+        "playground"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor",
+        "major"
+      ],
+      "groupName": "playground",
+      "groupSlug": "playground",
+      "labels": [
+        "dependencies"
+      ],
+      "addLabels": [
+        "dependencies"
+      ]
     }
   ]
 }
