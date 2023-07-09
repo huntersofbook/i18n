@@ -19,7 +19,21 @@ const debug = {
   env: Debug('unplugin-i18n-watch:env'),
 }
 
-export class Context {
+export interface IContext {
+  options: ResolvedOptions
+  root: string
+  setupViteServer(server: ViteDevServer): void
+  setupWatcher(watcher: fs.FSWatcher): void
+  onUpdate(path: string): void
+  onFirstUpdate(): void
+  removeFiles(paths: string | string[]): any
+  addFiles(cssFiles?: string | string[]): any
+  searchGlob(): Promise<void>
+  findComponent(name: string, type: 'component' | 'directive', excludePaths?: string[]): Promise<FileInfo | undefined>
+  setRoot(root: string): void
+}
+
+export class Context implements IContext {
   options: ResolvedOptions
 
   private _componentCSSPaths = new Set<string>()
