@@ -6,6 +6,7 @@ import { Context } from './context'
 import { writeI18nLanguageFile } from './write'
 
 export default createUnplugin<Options>((options = {}) => {
+  console.log('hello2', options)
   const ctx: Context = new Context(options)
 
   return {
