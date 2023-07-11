@@ -8,7 +8,6 @@ import { merge } from 'schob'
 import { isArray } from 'lodash'
 import { globbySync } from 'globby'
 import type { Context } from './context'
-import { matchGlobs } from './utils'
 
 const debug = Debug('unplugin-i18n-watch:write')
 
@@ -133,55 +132,6 @@ async function objectUpdate(exportFile: any, templateFile?: string | undefined, 
         consola.error(error, exportFile)
       }
     }
-  }
-}
-
-function autoClean(ctx: Context, existDirectory: boolean) {
-  if (existDirectory) {
-    const templateFiles = globbySync(`${ctx.options.templateDir}/**/*`, { cwd: ctx.root }).map((file) => {
-      return resolve(ctx.root, file).split(ctx.options.templateDir)[1]
-    })
-
-    const selectFiles: string[] = []
-    ctx.options.languages.forEach((lang) => {
-      templateFiles.forEach((file) => {
-        selectFiles.push(`${ctx.options.exportDir}/${lang}${file}`)
-      })
-    })
-
-    const exportFiles = globbySync(`${ctx.options.exportDir}/**/*`, { cwd: ctx.root })
-
-    const diff = exportFiles.filter((x) => {
-      return !matchGlobs(x, selectFiles)
-    })
-
-    ctx.options.languages.forEach((lang) => {
-      diff.forEach((_file) => {
-        try {
-          const data = lstatSync(_file).isDirectory()
-          if (data)
-            rmSync(_file, { recursive: true })
-        }
-        catch (error) {
-
-        }
-        const file = _file.split(ctx.options.exportDir)[1]
-        if (file.split('/')[1] === lang)
-          rmSync(_file)
-      })
-    })
-
-    const emtyDirs = globbySync(`${ctx.options.exportDir}/**/*`, { onlyDirectories: true, cwd: ctx.root })
-
-    function emptyDir(dirPath: string) {
-      const dirContents = readdirSync(dirPath) // List dir content
-      if (dirContents.length === 0)
-        rmdirSync(dirPath) // Delete dir
-    }
-
-    emtyDirs.forEach((dir) => {
-      emptyDir(dir)
-    })
   }
 }
 
