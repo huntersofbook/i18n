@@ -1,13 +1,16 @@
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import path, { resolve } from 'pathe'
+import path from 'pathe'
+
+import { exists, getJsonFiles, readFile, writeFile } from '~src/core/utils/FileHelper'
 import type { IContext } from '~src/core/context'
-import { i18nService } from '~src/services/i18n.service'
-import { FileHelper } from '~src/utils/FileHelper'
 
-export * from '~src/type'
-export { default } from '~src/core/unplugin'
+import { setupContext } from '~src/core/core'
+import { i18nService } from '~src/core/services/i18n.service'
 
-const template = `{
+const currentDate = new Date()
+const formattedDate = `${currentDate.toLocaleDateString()} - ${currentDate.toLocaleTimeString()}`
+const mockTempleteData = `{
+  "date": "${formattedDate}",
   "huntersofbook": "read a book",
   "hello": "hello",
   "githubStar": "https://github.com/huntersofbook/huntersofbook",
@@ -15,76 +18,124 @@ const template = `{
 }
 `
 
+/* const mockTempleteData2 = `{
+  "message": "bu yeni datadır",
+  "date": "${formattedDate}",
+  "huntersofbook": "read a book",
+  "hello": "hello",
+  "githubStar": "https://github.com/huntersofbook/huntersofbook",
+  "sponsor": "https://github.com/sponsors/productdevbook"
+}
+` */
+
 // The two tests marked with concurrent will be run in parallel
 describe('i18n Test', async () => {
-  const fileHelper = new FileHelper()
-  const templateDir = 'test/.temp/.i18n'
-  const exportDir = 'test/.temp/languages'
+  const i18nDir = 'test/.temp/.i18n'
+  const languagesDir = 'test/.temp/languages'
+  const schemaPath = 'test/.temp/.i18n/schema.json'
 
-  let ctx: Awaited<ReturnType<typeof i18nService>>
+  // let ctx: Awaited<ReturnType<typeof i18nService>>
+
+  // let ctx: Awaited<ReturnType<typeof i18nService>>
+
+  let ctx: IContext
 
   beforeAll(async () => {
-    ctx = await i18nService({
-      options: {
-        templateDir,
-        exportDir,
+    const { ctx: _ctx } = setupContext({
+      watch: true,
+      option: {
+        templateDir: i18nDir,
+        exportDir: languagesDir,
         deep: true,
-        globs: ['deneme'],
+        globs: ['test/.temp/.i18n/**/*.json'],
         extensions: ['json'],
         languages: ['tr', 'en', 'ch'],
-        resolvedDir: 'deneme',
-        root: 'deneme',
         schema: 'schemaEn.json',
       },
-    } as Partial<IContext> as IContext)
+    })
 
-    await ctx.createFirstTemplate(template)
+    await _ctx.bootstrap(mockTempleteData)
+
+    ctx = _ctx
+
+    // await ctx.createStartTemplate(template)
   })
 
   afterAll(async () => {
-    // await ctx.deleteAllFolders()
-    // await ctx.deleteAllFolders(ctx.options.templateDir)
+    const { deleteAllFolders } = await i18nService(ctx)
+    deleteAllFolders()
   })
 
-  /* describe('Folder Check', () => {
-    test('resolve tests', async () => {
-      expect(ctx.options.templateDir).toEqual(resolve('test/.temp/.i18n'))
-      expect(ctx.options.exportDir).toEqual(resolve('test/.temp/.languages'))
-    })
-  }) */
-
-  describe('exists folders', () => {
+  describe('Exists folders', () => {
     test('should return true if .i18n exists', async () => {
-      const exists = await fileHelper.exists(templateDir)
-      expect(exists).toBe(true)
+      const _exists = await exists(i18nDir)
+      expect(_exists).toBe(true)
     })
 
     test('should return true if .languages exists', async () => {
-      const exists = await fileHelper.exists(exportDir)
-      expect(exists).toBe(true)
+      const _exists = await exists(languagesDir)
+      expect(_exists).toBe(true)
     })
   })
 
   describe('Localization files', () => {
-    const schemaDir = resolve('test/.temp/.i18n/schema.json')
-
     test('should return true if schema.json exists', async () => {
-      const exists = await fileHelper.exists(schemaDir)
-      expect(exists).toBe(true)
+      const _exists = await exists(schemaPath)
+      expect(_exists).toBe(true)
     })
 
     test('should exist languages files', async () => {
-      const jsonFiles = await ctx.getJsonFiles(exportDir)
+      const jsonFiles = await getJsonFiles(languagesDir)
 
       // Expect that there is at least one JSON file
       expect(jsonFiles.length).toBeGreaterThan(0)
 
       // Check each file
       for (const file of jsonFiles) {
-        const filePath = path.join('./test/.temp/languages', file)
-        const exists = await fileHelper.exists(filePath)
-        expect(exists).toBe(true)
+        const filePath = path.join(languagesDir, file)
+        const _exists = await exists(filePath)
+        expect(_exists).toBe(true)
       }
     })
+  })
+
+  describe('File Update', () => {
+    test('schema.json içeriği ile diğer dosyalar aynı olmalı', async () => {
+      const _exists = await exists(schemaPath)
+      expect(_exists).toBe(true)
+
+      const readSchemaData = await readFile(schemaPath)
+
+      const jsonFiles = await getJsonFiles(languagesDir)
+
+      if (jsonFiles?.length) {
+        for (const file of jsonFiles) {
+          const filePath = path.join(languagesDir, file)
+          const fileData = await readFile(filePath)
+
+          expect(readSchemaData).toBe(fileData)
+        }
+      }
+    })
+
+    // TODO schema güncellenince diğerleri güncellenmiyor!!! buna bakılacak.
+    /* test('schema.json içeriğini değiştir', async () => {
+      const _exists = await exists(schemaPath)
+      expect(_exists).toBe(true)
+
+      await writeFile(schemaPath, mockTempleteData2)
+      const readSchemaData = await readFile(schemaPath)
+
+      const jsonFiles = await getJsonFiles(languagesDir)
+
+      if (jsonFiles?.length) {
+        for (const file of jsonFiles) {
+          const filePath = path.join(languagesDir, file)
+          const fileData = await readFile(filePath)
+
+          expect(readSchemaData).toBe(fileData)
+        }
+      }
+    }) */
   })
 })

@@ -6,10 +6,9 @@ import { basename } from 'pathe'
 import Debug from 'debug'
 import { slash, toArray } from '@antfu/utils'
 import type { FileInfo, Options, ResolvedOptions } from '../type'
-import { matchGlobs } from './utils'
-import { writeI18nLanguageFile } from './write'
+import { i18nService } from './services/i18n.service'
+import { matchGlobs } from './utils/utils'
 import { resolveOptions } from './options'
-import { searchI18nFiles } from './fs/glob'
 
 const debug = {
   files: Debug('unplugin-i18n-watch:context:files'),
@@ -25,10 +24,10 @@ export interface IContext {
   setupViteServer(server: ViteDevServer): void
   setupWatcher(watcher: fs.FSWatcher): void
   onUpdate(path: string): void
-  onFirstUpdate(): void
+  bootstrap(): void
   removeFiles(paths: string | string[]): any
   addFiles(cssFiles?: string | string[]): any
-  searchGlob(): Promise<void>
+  // searchGlob(): Promise<void>
   findComponent(name: string, type: 'component' | 'directive', excludePaths?: string[]): Promise<FileInfo | undefined>
   setRoot(root: string): void
 }
@@ -49,6 +48,14 @@ export class Context implements IContext {
 
   root = process.cwd()
 
+  setRoot(root: string) {
+    if (this.root === root)
+      return
+    debug.env('root', root)
+    this.root = root
+    this.options = resolveOptions(this.rawOptions, this.root)
+  }
+
   setupViteServer(server: ViteDevServer) {
     if (this._server === server)
       return
@@ -61,6 +68,7 @@ export class Context implements IContext {
     const { globs } = this.options
     watcher
       .on('unlink', (path) => {
+        console.log(`DELETE: ${path}`)
         if (!matchGlobs(path, globs))
           return
 
@@ -70,6 +78,7 @@ export class Context implements IContext {
       })
 
     watcher.on('change', (path) => {
+      console.log(`CHANGE: ${path}`)
       if (!matchGlobs(path, globs))
         return
       debug.files('change', path)
@@ -79,6 +88,7 @@ export class Context implements IContext {
 
     watcher
       .on('add', (path) => {
+        console.log(`ADD: ${path}`)
         if (!matchGlobs(path, globs))
           return
 
@@ -88,10 +98,12 @@ export class Context implements IContext {
       })
   }
 
-  onUpdate(path: string) {
+  async onUpdate(path: string) {
     debug.hmr('update', path)
 
-    writeI18nLanguageFile(this, path)
+    const { updatei18nTheme } = await i18nService(this)
+
+    await updatei18nTheme(path)
 
     if (!this._server)
       return
@@ -100,14 +112,15 @@ export class Context implements IContext {
       type: 'update',
       updates: [],
     }
-    const timestamp = +new Date()
 
     if (payload.updates.length)
       this._server.ws.send(payload)
   }
 
-  onFirstUpdate() {
-    writeI18nLanguageFile(this)
+  async bootstrap(template?: any) {
+    const { createStarterTemplate } = await i18nService(this)
+
+    await createStarterTemplate(template)
   }
 
   removeFiles(paths: string | string[]) {
@@ -156,9 +169,9 @@ export class Context implements IContext {
       })
   }
 
-  async searchGlob() {
-    searchI18nFiles(this)
-  }
+  /* async searchGlob() {
+    this.bootstrap()
+  } */
 
   async findComponent(name: string, type: 'component' | 'directive', excludePaths: string[] = []): Promise<FileInfo | undefined> {
     // resolve from fs
@@ -166,13 +179,5 @@ export class Context implements IContext {
     if (info && !excludePaths.includes(info.from) && !excludePaths.includes(info.from.slice(1)))
       return info
     return undefined
-  }
-
-  setRoot(root: string) {
-    if (this.root === root)
-      return
-    debug.env('root', root)
-    this.root = root
-    this.options = resolveOptions(this.rawOptions, this.root)
   }
 }

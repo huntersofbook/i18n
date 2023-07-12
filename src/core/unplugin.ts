@@ -1,12 +1,13 @@
-import { createUnplugin } from 'unplugin'
 import chokidar from 'chokidar'
+import { createUnplugin } from 'unplugin'
 import type { ResolvedConfig, ViteDevServer } from 'vite'
+
 import type { Options } from '../type'
+
 import { Context } from './context'
-import { writeI18nLanguageFile } from './write'
+import { i18nService } from './services/i18n.service'
 
 export default createUnplugin<Options>((options = {}) => {
-  console.log('hello2', options)
   const ctx: Context = new Context(options)
 
   return {
@@ -17,7 +18,7 @@ export default createUnplugin<Options>((options = {}) => {
         ctx.setRoot(config.root)
         // ctx.sourcemap = true
         if (ctx.options.templateDir)
-          ctx.searchGlob()
+          ctx.bootstrap()
 
         if (config.build.watch && config.command === 'build')
           ctx.setupWatcher(chokidar.watch(ctx.options.globs))
@@ -29,9 +30,10 @@ export default createUnplugin<Options>((options = {}) => {
     buildStart() {
       ctx.setRoot(process.cwd())
       if (ctx.options.templateDir)
-        ctx.searchGlob()
+        ctx.bootstrap()
 
-      writeI18nLanguageFile(ctx)
+      // writeI18nLanguageFile(ctx)
+      i18nService(ctx)
     },
   }
 })
