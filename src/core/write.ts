@@ -1,6 +1,6 @@
-import { copyFileSync, existsSync, lstatSync, mkdir, mkdirSync, readFileSync, readdirSync, rmSync, rmdirSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdir, mkdirSync, readFileSync, rmSync, rmdirSync, writeFileSync } from 'node:fs'
 
-import { basename, dirname, resolve } from 'pathe'
+import { basename, dirname, resolve } from 'node:path'
 import consola from 'consola'
 import Debug from 'debug'
 
@@ -8,7 +8,6 @@ import { merge } from 'schob'
 import { isArray } from 'lodash'
 import { globbySync } from 'globby'
 import type { Context } from './context'
-import { matchGlobs } from './utils'
 
 const debug = Debug('unplugin-i18n-watch:write')
 
@@ -133,55 +132,6 @@ async function objectUpdate(exportFile: any, templateFile?: string | undefined, 
         consola.error(error, exportFile)
       }
     }
-  }
-}
-
-function autoClean(ctx: Context, existDirectory: boolean) {
-  if (existDirectory) {
-    const templateFiles = globbySync(`${ctx.options.templateDir}/**/*`, { cwd: ctx.root }).map((file) => {
-      return resolve(ctx.root, file).split(ctx.options.templateDir)[1]
-    })
-
-    const selectFiles: string[] = []
-    ctx.options.languages.forEach((lang) => {
-      templateFiles.forEach((file) => {
-        selectFiles.push(`${ctx.options.exportDir}/${lang}${file}`)
-      })
-    })
-
-    const exportFiles = globbySync(`${ctx.options.exportDir}/**/*`, { cwd: ctx.root })
-
-    const diff = exportFiles.filter((x) => {
-      return !matchGlobs(x, selectFiles)
-    })
-
-    ctx.options.languages.forEach((lang) => {
-      diff.forEach((_file) => {
-        try {
-          const data = lstatSync(_file).isDirectory()
-          if (data)
-            rmSync(_file, { recursive: true })
-        }
-        catch (error) {
-
-        }
-        const file = _file.split(ctx.options.exportDir)[1]
-        if (file.split('/')[1] === lang)
-          rmSync(_file)
-      })
-    })
-
-    const emtyDirs = globbySync(`${ctx.options.exportDir}/**/*`, { onlyDirectories: true, cwd: ctx.root })
-
-    function emptyDir(dirPath: string) {
-      const dirContents = readdirSync(dirPath) // List dir content
-      if (dirContents.length === 0)
-        rmdirSync(dirPath) // Delete dir
-    }
-
-    emtyDirs.forEach((dir) => {
-      emptyDir(dir)
-    })
   }
 }
 
@@ -419,4 +369,124 @@ export async function writeI18nLanguageFile(ctx: Context, filepath?: string) {
   }
 
   // autoClean(ctx, existDirectory)
+}
+
+interface I18n {
+  templateDir?: string
+  exportDir?: string
+  languages?: string[]
+  root?: string
+  schema?: string
+}
+
+export async function useI18n(options: I18n, filepath?: string) {
+  let _options: Required<I18n> = {
+    exportDir: resolve('language'),
+    languages: ['en'],
+    templateDir: resolve('.i18n'),
+    root: '',
+    schema: 'schema.json',
+  }
+
+  if (options) {
+    _options = {
+      ..._options,
+      ...options,
+    }
+  }
+
+  let languages: string[] = []
+  let templateFolderDirectories: string[] | undefined
+  let templateFolderFiles: string[] | undefined
+
+  const defaultFiles = {
+    schema: [`/${_options.templateDir}/schema.json`],
+  }
+  const template = `{
+  "huntersofbook": "huntersofbook.comasdasdasd",
+  "productdevbook": "productdevbook.com",
+  "githubStar": "https://github.com/productdevbook",
+  "sponsor": "https://github.com/sponsors/productdevbook"
+}
+`
+
+  async function checkDirectory() {
+    if (!existsSync(_options.templateDir))
+      mkdirSync(_options.templateDir)
+
+    if (!existsSync(_options.exportDir))
+      mkdirSync(_options.exportDir)
+  }
+
+  async function checkTemplateFolderDirectories() {
+    try {
+      templateFolderDirectories = globbySync(`${_options.templateDir}/**/*`, { onlyDirectories: true, cwd: _options.root })
+    }
+    catch (error) {
+      consola.error(error)
+    }
+  }
+
+  async function checkTemplateFolderFiles() {
+    try {
+      templateFolderFiles = globbySync(`${_options.templateDir}/*`, { onlyFiles: true, cwd: _options.root, deep: 0 })
+    }
+    catch (error) {
+      consola.error(error)
+    }
+  }
+
+  async function writeFile(data: any, path: string) {
+    data = JSON.parse(JSON.stringify(data))
+    writeFileSync(path, data, {
+      encoding: 'utf-8',
+      flag: 'w',
+      mode: 0o777,
+    })
+  }
+
+  async function writeLanguagesToFile(data: any) {
+    for await (const lang of languages) {
+      const exportFile = resolve(_options.root, _options.exportDir, `${lang}.json`)
+      await writeFile(data, exportFile)
+    }
+  }
+
+  async function firstInstall() {
+    await checkDirectory()
+    for await (const schema of defaultFiles.schema) {
+      /**
+     * If the template directory is empty, create a schema.json file
+     */
+      if (!existsSync(schema))
+        writeFileSync(`/${options.templateDir}/schema.json`, template)
+
+      await writeLanguagesToFile(template)
+    }
+  }
+
+  async function onInit() {
+    if (options.languages)
+      languages = options.languages
+
+    await firstInstall()
+    await checkDirectory()
+    await checkTemplateFolderDirectories()
+    await checkTemplateFolderFiles()
+  }
+
+  async function checkKeyJSON() {
+    for await (const schema of defaultFiles.schema) {
+      if (!existsSync(schema))
+        writeFileSync(`/${options.templateDir}/schema.json`, template)
+    }
+  }
+
+  return {
+    onInit,
+    firstInstall,
+    languages,
+    templateFolderDirectories,
+    templateFolderFiles,
+  }
 }

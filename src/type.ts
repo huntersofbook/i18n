@@ -78,6 +78,9 @@ export type ResolvedOptions = Omit<
     Required<Options>,
   | 'templateDir' | 'extensions'
 > & {
+  /**
+   * @default .i18n
+  */
   templateDir: string
   root: string
   resolvedDir: string
