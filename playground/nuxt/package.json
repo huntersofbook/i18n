@@ -9,6 +9,6 @@
   },
   "devDependencies": {
     "@huntersofbook/i18n": "workspace:*",
-    "nuxt": "3.6.2"
+    "nuxt": "3.12.4"
   }
 }
